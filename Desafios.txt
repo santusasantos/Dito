@@ -1,0 +1,62 @@
+Desafio 1 
+1.	Para obter o resultado, selecionei primeiramente as 5 pessoas de maior faturamento e o último registro de dados pessoais atualizado.
+ 
+
+WITH faturamento AS
+(SELECT
+id, SUM(properties.revenue) Receita
+FROM `dito-data-scientist-challenge.tracking.dito` 
+WHERE TYPE='track'
+GROUP BY id
+ORDER BY Receita DESC
+LIMIT 5),
+ultimaalteracao as
+(SELECT id, max(timestamp) timestamp FROM `dito-data-scientist-challenge.tracking.dito` WHERE TYPE='identify' and traits.name is not null GROUP BY id)
+SELECT 
+traits.name
+,traits.email
+,traits.phone
+FROM `dito-data-scientist-challenge.tracking.dito`
+JOIN ultimaalteracao USING (id,timestamp)
+JOIN faturamento USING (id)
+
+
+
+2.	Levando em consideração a formula de frequência de compras ( qtde compras/período), realizei este cálculo por cliente. Após obter a frequência por cliente, realizei o cálculo da mediana.
+
+ 
+
+WITH dias_compras AS
+(SELECT id, MAX(timestamp) max_data,MIN(timestamp) min_data,count(id) qte_compra
+FROM `dito-data-scientist-challenge.tracking.dito`
+WHERE type = 'track' AND properties.action='buy'
+GROUP BY id),
+compras_periodo AS
+(SELECT id,CAST(AVG( qte_compra/DATE_DIFF(DATE(max_data), DATE(min_data),DAY)) AS INT64) frequencia
+FROM dias_compras
+GROUP BY id
+ORDER BY 2)
+
+SELECT PERCENTILE_CONT(frequencia, 0.5) OVER() as mediana
+FROM compras_periodo
+LIMIT 1
+
+
+
+
+
+
+Desafio 2 
+
+Análises Relevantes:
+1.	% compras através de campanha por e-mail
+2.	Aderência a campanha por região
+3.	% “reprovação” da Campanha 
+4.	Produtos mais comprados por perfil de cliente.
+
+Conhecer as necessidades dos clientes é o item primordial para sucesso do negócio. Através das análises acima é possível identificar o canal de preferência dos clientes, a região com alto índice de aderência e assim realizar uma campanha direcionada e por fim analisar a insatisfação do cliente, podendo gerar novas ações para o seu retorno e/ou interesse nos produtos.
+
+
+Desafio 3
+
+https://www.powtoon.com/c/bDwCvB4kaRc/1/m
